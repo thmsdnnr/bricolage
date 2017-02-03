@@ -244,7 +244,18 @@ img.thumb-responsive {
 button#addButton {
   background-color: #ffc107;
   position: absolute;
+  top: 0;
   right: 0;
+  outline: none;
+  border: none; }
+
+div#lessMore {
+  background-color: #ffc107;
+  color: black;
+  display: inline;
+  position: absolute;
+  bottom: 5;
+  right: 5;
   outline: none;
   border: none; }
 

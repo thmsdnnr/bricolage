@@ -284,7 +284,19 @@ img.thumb-responsive {
 button#addButton {
   background-color: saturate($primary-color-dark, 20%);
   position: absolute;
+  top: 0;
   right: 0;
+  outline: none;
+  border: none;
+}
+
+div#lessMore {
+  background-color: saturate($primary-color-dark, 20%);
+  color: black;
+  display: inline;
+  position: absolute;
+  bottom: 5;
+  right: 5;
   outline: none;
   border: none;
 }

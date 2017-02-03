@@ -25,6 +25,40 @@ window.onload = function() {
   let yScrollModalReturn;
   let _d=window.INITIAL_STATE;
   let imgDict=_d.dict;
+  let q=window.INITIAL_STATE.query;
+
+  function showLessMoreResults(query,page) { //called with query and current page
+    //?q=${query}&p=${page}
+    let numTotalPages=parseInt(q.totalPages);
+    let numResultPage=parseInt(q.resultPage);
+    let numImages=parseInt(q.numImages);
+    let d = document.querySelector('div#lessMore');
+    if ((numResultPage>numTotalPages)||(numResultPage<1)) { //malformed request
+      d.innerHTML='';
+      return false;
+    }
+    if (numResultPage>1) { //display a LESS with href q.resultPage-1
+      d.innerHTML+=`<a href="/s/?q=${query}&p=${parseInt(page)-1}" id="backResults"><< go backwards</a>`;
+    }
+    if (numResultPage<numTotalPages) { //display a MORE with href q.resultPage+1
+        d.innerHTML+=` | <a href="/s/?q=${query}&p=${parseInt(page)+1}" id="forwardResults">go forwards >></a>`;
+      }
+    }
+
+//{qText:req.body.qText,qParams:req.body.qParam,resultPage:resultPage}
+  function fetchMoreResults(query, page) { //TODO turn this into a GET. Take the data and call a rendering
+    fetch('/s',{
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      method: "POST",
+      credentials: "include",
+      body: `qText=${query}&rPage=${page}`
+    }).then(response=>{
+      console.log(response);
+    });
+  }
 
   console.log(window.INITIAL_STATE);
   console.log(_d.userList);
@@ -97,7 +131,7 @@ window.onload = function() {
       (u.name) ? name=u.name : name='~';
       (u.portfolio_url) ? portF=`<a href="${u.portfolio_url}" target="_new">${img}${name}</a><br />` : portF=`${img}`;
       (u.location) ? location=`${u.location}` : location = '';
-
+//TODO double check _d.user!==req.body.username
       if (_d.user&&!_d.userList[lastElement.id.slice(2)]) { //TODO that slice two though
         i.innerHTML+=`<div id="addButton"><button id="addButton" data-text="${lastElement.id}" class="wave">ADD+ <3s: ${v.imageInfo.likes}</button></div>`;
       }
@@ -125,6 +159,7 @@ window.onload = function() {
       window.addEventListener('scroll', handleScroll);
       window.addEventListener('resize', handleResize);
       setGridStates();
+      if(q){ showLessMoreResults(q.query, q.resultPage); }
   }
 
   let handleScroll = debounce(function(e){
@@ -227,6 +262,7 @@ window.onload = function() {
         toaster(e, 'Good Choice!', 1);
         console.log(response);
         _d.userList[e.target.dataset.text.slice(2)]=1; //TODO that damn slice(2)
+        console.log(_d.userList);
       });
     }
   }

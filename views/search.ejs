@@ -7,9 +7,10 @@
 <body>
   <% include ../static/assets/includes/header.ejs %>
     <div id="box">
-  <h1><%=message%></h1><br />
-    <form method="POST" action="/s" id="imageSearch">
-      <input type="text" name="qText" placeholder="What do you love?" required autofocus id="search">
+  <h1></h1><br />
+    <form method="GET" action="/s" id="imageSearch">
+      <input type="text" name="q" placeholder="What do you love?" required autofocus id="search">
+      <input type="hidden" name="p" value="1">
       <input type="submit" action="Submit" value="Submit">
     </form>
   </div>
