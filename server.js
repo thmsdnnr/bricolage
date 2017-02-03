@@ -22,10 +22,6 @@ const User=require('./models/user');
 const Image=require('./models/image');
 const Search=require('./models/search');
 
-const Unsplash=require('unsplash-js');
-const unsplash = require('unsplash-api'); //TODO remove if you don't use this
-unsplash.init(process.env.API_KEY); //TODO remove if you don't use this
-
 const app=express();
 app.use(helmet());
 app.use(cookieParser(process.env.SESSION_SECRET || 'DREAMSBEDREAMS'));
