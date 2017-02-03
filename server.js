@@ -239,7 +239,8 @@ app.post('/s', function(req,res) {
 app.get('/w/:username', function(req,res) { //Get a user's wall given a username
   //TODO keep search user distinct from login user
   let imgLinks=[]; //URLs to images from this search. Never null.
-  let userList=getUserImageDict(req.params.username); //images the user has already added in this search. Could be null.
+  let userList=getUserImageDict(req.session.user); //images the user already has. Could be null.
+  console.log(userList);
   let imgDict={}; //info about all the images in this search. Never null.
   if (!req.params.username) {
     res.redirect('/'); //TODO default redirects
@@ -249,7 +250,6 @@ app.get('/w/:username', function(req,res) { //Get a user's wall given a username
         if (data)
         {
           let photoPromises=data.photoWall.map((photo)=>getOnePhoto(photo));
-          data.photoWall.forEach((photo)=>userList[photo]=1);
           Promise.all(photoPromises).then(function(data) {
             data.forEach((img)=>{
               let i=img.imageInfo;

@@ -108,6 +108,7 @@ div#imgModal {
   position: absolute;
   z-index: 20;
   background-repeat: no-repeat no-repeat;
+  background-position: center;
   background-size: cover; }
 
 div#modalScreen {
@@ -174,6 +175,7 @@ div#attribution {
   justify-content: center;
   vertical-align: middle;
   background-color: #C5CAE9;
+  color: #212121;
   display: inline;
   padding: 2px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22); }
@@ -204,16 +206,18 @@ span#boxCont {
   padding: 10px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22); }
 
-span.child {
+div.child {
   flex: 0 1 auto;
   flex-flow: row wrap;
+  max-width: 180px;
   align-self: flex-start;
   vertical-align: middle; }
 
-span#name {
+div#name.child {
+  max-width: 180px;
   display: inline;
-  text-align: center;
-  font-size: 1.2vw;
+  text-align: left;
+  font-size: 1vw;
   font-style: italic; }
 
 img.profileImage {
@@ -238,7 +242,7 @@ img.thumb-responsive {
   transition: all 140ms ease-in; }
 
 button#addButton {
-  background-color: #a07800;
+  background-color: #ffc107;
   position: absolute;
   right: 0;
   outline: none;
@@ -254,7 +258,7 @@ div#RGY {
   width: auto;
   top: 2;
   left: 2;
-  color: #BDBDBD;
+  color: black;
   background-color: #C5CAE9;
   border-spacing: 0.8vw;
   z-index: 1;

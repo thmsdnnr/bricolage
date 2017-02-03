@@ -22,6 +22,7 @@ window.onload = function() {
   let gridStates={};
   let modalPopped=false;
   let screenPopped=false;
+  let yScrollModalReturn;
   let _d=window.INITIAL_STATE;
   let imgDict=_d.dict;
 
@@ -45,10 +46,10 @@ window.onload = function() {
   imagesLoaded(elem).on('progress', function(instance, image){
     //TODO since it's a placeholder make sure to NOT display attribution data for it!
     if (!image.isLoaded) { image.img.src='/assets/images/brico.jpeg'; console.log(image);}
-    msnry.layout(); //call after each image load
   });
 
   imagesLoaded(elem).on('done', function() {
+    msnry.layout(); //call after each image load
     triggerTheMagic();
   });
 
@@ -84,15 +85,23 @@ window.onload = function() {
       }
       //add tooltip attribution stuff
       let img,name,location,portF;
-      (u.profile_image) ? img=`<img src="${u.profile_image.medium}" class="profileImage">` : img='';
+      if (u.profile_image) {
+        /*urls are like this:
+        "https://images.unsplash.com/profile-1469106954784-359e75d17f0d?ixlib=rb-0.3…srgb...
+        or this:
+        "https://images.unsplash.com/placeholder-avatars/extra-large.jpg?ixlib=rb-...
+        We don't want to display placeholders, so parse url for 'profile' or 'placeholder' and act accordingly */
+        let profImgType=u.profile_image.medium.split("https://images.unsplash.com/")[1].split("-")[0];
+        (profImgType==='profile') ? img=`<img src="${u.profile_image.medium}" class="profileImage">` : img='';
+      }
       (u.name) ? name=u.name : name='~';
-      (u.portfolio_url) ? portF=`<a href="${u.portfolio_url}" target="_new">${name}</a><br />` : portF='';
+      (u.portfolio_url) ? portF=`<a href="${u.portfolio_url}" target="_new">${img}${name}</a><br />` : portF=`${img}`;
       (u.location) ? location=`${u.location}` : location = '';
 
       if (_d.user&&!_d.userList[lastElement.id.slice(2)]) { //TODO that slice two though
         i.innerHTML+=`<div id="addButton"><button id="addButton" data-text="${lastElement.id}" class="wave">ADD+ <3s: ${v.imageInfo.likes}</button></div>`;
       }
-      i.innerHTML+=`<span id="boxCont"><div id="attribution" style="background-color:${bgColor}">${img}<span id="name" class="child">${portF}${location}</span>`;
+      i.innerHTML+=`<span id="boxCont"><div id="attribution"><div id="name" class="child">${portF}${location}</span>`;
       i.innerHTML+=`</div></span>`;
       i.classList.add('showTip');
       i.style.display='inline';
@@ -119,13 +128,13 @@ window.onload = function() {
   }
 
   let handleScroll = debounce(function(e){
-      updateToolTip();
+      (modalPopped) ? document.querySelector('span#infoBox').style.display='none': updateToolTip();
       recalculateModal();
-    },5,true);
+    },10,true);
 
   function handleResize(e) {
+    (modalPopped) ? document.querySelector('span#infoBox').style.display='none': updateToolTip();
     recalculateModal();
-    updateToolTip();
   }
 
   function setGridStates() {
@@ -284,46 +293,44 @@ window.onload = function() {
   }
 
   function popModal(id) {
+    document.querySelector('span#infoBox').style.display='none'; //remove the infobox
     if(!id) {return false;}
+    yScrollModalReturn=window.scrollY; //where to go when we return
       //screen behind modal
         let screen=document.createElement('div');
         screen.id='modalScreen';
-        screen.style.top=window.scrollY;
-        screen.style.height=window.outerHeight+100;
-        screen.style.width=window.outerWidth+100;
+        screen.style.top=0;
+        screen.style.height=window.innerHeight+2400;
+        screen.style.width=window.innerWidth;
       //modal itself
         let modal=document.createElement('div');
         modal.id='imgModal';
         modal.dataset.id=id;
         let borderColor=imgDict[lastElement.id.slice(2)].imageInfo.color;
-        //modal.style.maxHeight=window.innerHeight-10;
-        modal.style.maxWidth=window.innerWidth-10;
-        modal.style.height=window.innerHeight-40;
-        modal.style.width=window.innerWidth-40;
+
+        modal.style.top=0;
+        modal.style.width=window.innerWidth-10;
         modal.style.border=`4px solid ${borderColor}`;
-/*        modal.style.width=window.innerWidth*.9;
-        modal.style.height=window.innerHeight*.9;
-        modal.style.maxHeight=window.innerHeight-10;
-        modal.style.maxWidth=window.innerWidth-10;*/
+
         let closeBox=document.createElement('div');
         closeBox.id='modalClose';
         closeBox.innerHTML=`X`;
+        modal.style.left=Math.floor(window.scrollX+(window.innerWidth-parseInt(modal.style.width))/2);
+
         closeBox.addEventListener('click',killModal,true);
         modal.appendChild(closeBox);
         let img=new Image();
         img.onload=function() {
           modal.style.height=img.height;
-          //console.log(img.height,img.width);
           document.body.append(screen);
           screenPopped=screen;
           document.body.append(modal);
+          window.scroll(0,0);
           modalPopped=modal;
         }
         img.src=`${imgDict[id.slice(2)].imageInfo.urls.regular}`; //TODO that lopping off tho
-        modal.style.height=window.innerHeight-10;//Math.min(modal.style.maxHeight.split("px")[0],img.height);
-        modal.style.width=window.innerWidth-10;//Math.min(modal.style.maxHeight.split("px")[0],img.width);
-        modal.style.top=Math.floor(window.scrollY+(window.innerHeight-modal.style.height.split("px")[0])/2);
-        modal.style.left=Math.floor((window.scrollX+window.innerWidth-modal.style.width.split("px")[0])/2);
+        //Math.floor(window.scrollY+(window.innerHeight-modal.style.height.split("px")[0])/2);
+        modal.style.left=Math.floor(window.scrollX+(window.innerWidth-parseInt(modal.style.width))/2);
         modal.style.backgroundImage=`url(${img.src})`;
     }
 
@@ -331,24 +338,24 @@ window.onload = function() {
       if(!modalPopped) { return false; }
       if(modalPopped) {
         let modal=document.querySelector('div#imgModal');
-        let cbr=modal.getBoundingClientRect();
-        /*if (window.scrollY > (modal.offsetTop + modal.offsetHeight)/2) {
-          window.scroll(0, window.scrollY-(modal.offsetHeight));
-        }*/
+        console.log('offset top, offest height', modal.offsetTop,modal.offsetHeight);
+        console.log('w scroll Y', window.scrollY);
+        //TODO smooth this out or make it less jerky
+        if (window.scrollY > (modal.offsetHeight-modal.offsetTop)) { //infinity scroll heh
+          window.scroll(0,modal.style.top); //pop back to top if more than half has been scrolled off screen
+        }
         console.log(window,scrollY)
         console.log((modal.offsetTop + modal.offsetHeight));
         console.dir(modal);
-        console.log('w.sY',window.scrollY);
-        let screen=document.querySelector('div#modalScreen');
-        screen.style.top=window.scrollY;
-        screen.style.left=window.scrollX;
-        screen.style.height=modal.offsetTop+modal.offsetHeight+100; // a little cushion so we don't mistakenly mess this up
-        screen.style.width=window.outerWidth+100;
       //  modal.style.maxHeight=window.innerHeight-10;
       //  modal.style.maxWidth=window.innerWidth-10;
-        //modal.style.height=window.innerHeight-40;
-        //modal.style.width=window.innerWidth-40;
-        modal.style.left=Math.floor((window.scrollX+window.innerWidth-modal.style.width.split("px")[0])/2);
+      //  modal.style.height=window.innerHeight-40;
+        let screen=document.querySelector('div#modalScreen');
+        modal.style.width=window.innerWidth-10;
+        screen.style.width=window.innerWidth;
+        console.log('scree nwidth',screen.style.width);
+        modal.style.width=window.innerWidth-10;
+        modal.style.left=Math.floor(window.scrollX+(window.innerWidth-parseInt(modal.style.width))/2);
       }
     }
 
@@ -358,7 +365,9 @@ window.onload = function() {
       console.dir(screenPopped);
       modalPopped.parentElement.removeChild(modalPopped);
       screenPopped.parentElement.removeChild(screenPopped);
+      document.querySelector('span#infoBox').style.display='none'; //remove the infobox
       modalPopped=false;
+      window.scroll(0,yScrollModalReturn);
     }
 
 // example call:
