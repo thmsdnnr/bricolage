@@ -1,0 +1,19 @@
+<html>
+<head>
+  <title>BRICOLAGE</title>
+  <link rel="stylesheet" type="text/css" href="/assets/css/style.css">
+</head>
+<body>
+  <% include ../static/assets/includes/header.ejs %>
+  <div id="userCard">
+  <%if(data.users){data.users.forEach((u)=>{%>
+    <a href="/w/<%-u.user%>">
+        <div id="card">
+          <h2><%-u.user%> (<%-u.numImages%>)</h2>
+          <img src="<%-u.thumbURL%>" class="thumb-responsive">
+    </div>
+  </a>
+    <%}); }%>
+  </div>
+</body>
+</html>

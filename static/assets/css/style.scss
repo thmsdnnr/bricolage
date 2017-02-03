@@ -1,0 +1,458 @@
+$primary-color-dark:   #FFC107;
+$primary-color:        #ede7f6;
+$primary-color-light:  #C5CAE9;
+$primary-color-text:   #DDDDDD;
+$accent-color:         #607D8B;
+$primary-text-color:   #212121;
+$secondary-text-color: #757575;
+$divider-color:        #BDBDBD;
+
+$red:                   #F44336;
+$yellow:                #FFEB3B;
+$green:                 #4CAF50;
+
+@import url('https://fonts.googleapis.com/css?family=Space+Mono');
+
+$font-stack: Space Mono, monospace;
+$secondary-font-stack: Courier New, sans-serif;
+
+/* force scrollbar */
+* { box-sizing: border-box; }
+html {
+    background-color: #111;
+    overflow-y: scroll;
+  }
+body {
+  font: 100% $font-stack;
+  color: $primary-color-text;
+}
+
+nav {
+  font-size: 1.4em;
+  letter-spacing: 0.1em;
+  color: $primary-color-text;
+  text-align: center;
+  margin: 10px;
+}
+
+div#nav {
+  width: auto;
+  background-color: $secondary-text-color;
+}
+
+div#nav a {
+  color: darken($secondary-text-color,20%);
+}
+
+a {
+  color: $accent-color;
+}
+
+a:hover {
+  color: $secondary-text-color;
+}
+
+h1 {
+  font-size: 2.2em;
+  color: $primary-text-color;
+}
+
+h2 {
+  font-size: 1.4em;
+  color: $secondary-text-color;
+}
+
+/*--toasts --*/
+div#toast {
+  position: fixed;
+  display: block;
+  background-color: saturate($primary-color-dark, 30%);
+  color: $accent-color;
+  padding: 10px;
+  border: 2px solid $divider-color;
+  width: auto;
+  height: auto;
+  z-index: 20;
+  font: $font-stack;
+  font-size: 1.4vw;
+  font-weight: 100;
+  letter-spacing: 0.1vw;
+  outline: none;
+  border: none;
+  -webkit-transition: all 200ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+ transition:         all 200ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+div#toast:hover {
+  background-color: $primary-color-light;
+  color: $secondary-text-color;
+}
+/*--toasts --*/
+
+form {
+  font: $font-stack;
+  font-size: 1em;
+  letter-spacing: 0.1em;
+  width: auto;
+}
+
+input {
+  padding: 6px;
+  width: auto;
+  max-width: 450px;
+  width: 300px;
+  font: $font-stack;
+  font-size: 1.7em;
+  letter-spacing: 0.1em;
+  outline: none;
+}
+
+input:focus {
+  border: 2px solid $divider-color;
+}
+
+input[type=submit] {
+  display:none;
+}
+
+input#search {
+  margin: auto;
+  font-size: 2em;
+  width: 400px;
+}
+
+button#submit {
+  width: 45vw;
+  width: 300px;
+  height: auto;
+  padding: 10px;
+  font: $font-stack;
+  font-size: 2em;
+  letter-spacing: 0.1em;
+  font-weight: 100;
+  outline: none;
+}
+
+/*--modal and screen--*/
+div#imgModal {
+  display: block;
+  position: absolute;
+  z-index: 20;
+  background-repeat: no-repeat no-repeat;
+  background-size: cover;
+}
+
+div#modalScreen {
+  width: 100%;
+  height: 100%;
+  z-index:15;
+  background-color: $primary-color-light;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow:hidden;
+}
+
+div#modalClose {
+  display: block;
+  position: absolute;
+  width: 4vw;
+  height: 4vw;
+  text-align: center;
+  vertical-align: middle;
+  top: 1;
+  right: 1;
+  font-size: 3vw;
+  font: $font-stack;
+  text-align: center;
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  user-select: none;
+  cursor: pointer;
+  z-index: 12;
+  color: $accent-color;
+  background-color: $primary-color-dark;
+}
+
+div#modalClose:hover {
+  background-color: $primary-color-light;
+  color: $primary-color-dark;
+}
+
+div#closeMax {
+  position: absolute;
+  top: 2;
+  right: 2;
+  font-size: 1.2vw;
+  font: $font-stack;
+  text-align: center;
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  user-select: none;
+  cursor: pointer;
+}
+
+img#modalImg {
+  max-width:100%;
+  max-height:100%;
+}
+/*--modal and screen--*/
+
+/* --hover frame for attribution-- */
+div#attribution {
+  justify-content: center;
+  vertical-align: middle;
+  background-color: $primary-color-light;
+  display: inline;
+  padding: 2px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}
+
+span#infoBox {
+  display: none;
+  position: fixed;
+  border: 4px inset gold;
+  font-size: 1vw;
+  letter-spacing: 0.1vw;
+  overflow-y: scroll;
+  font-family: $secondary-font-stack;
+  justify-content: center;
+  vertical-align: middle;
+  z-index: 10;
+}
+
+span.close {
+  border: 1px solid $divider-color;
+  font-size: 2vw;
+}
+
+span#boxCont{
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  justify-content: center;
+  vertical-align: middle;
+  display: flex;
+  padding: 10px;
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}
+
+span.child {
+  flex: 0 1 auto;
+  flex-flow: row wrap;
+  align-self: flex-start;
+  vertical-align: middle;
+}
+
+span#name {
+  display: inline;
+  text-align: center;
+  font-size: 1.2vw;
+  font-style: italic;
+}
+
+img.profileImage {
+  border-radius: 2%;
+  max-width: 5vw;
+  min-width: 2vw;
+  width: auto;
+  height: auto;
+  display: block;
+  float: left;
+  border: 0.1vw solid $divider-color;
+}
+
+img.thumb-responsive {
+  width: 100%;
+  margin: auto;
+  display: block;
+  border-radius: 1%;
+}
+
+.showTip {
+  display: inline;
+  -webkit-transition: all 140ms ease-in;
+  transition:         all 140ms ease-in;
+}
+
+button#addButton {
+  background-color: darken($primary-color-dark, 20%);
+  position: absolute;
+  right: 0;
+  outline: none;
+  border: none;
+}
+
+button#addButton:hover {
+  background-color: lighten($primary-color-dark, 40%);
+}
+/* close minimize maximize buttons */
+div#RGY {
+  position: absolute;
+  display: table;
+  width: auto;
+  top: 2;
+  left: 2;
+  color: $divider-color;
+  background-color: $primary-color-light;
+  border-spacing: 0.8vw;
+  z-index: 1;
+  font-size: 0.8vw;
+  font: $secondary-font-stack;
+  text-align: center;
+}
+
+div#R {
+  display: table-cell;
+  text-align: center;
+  width: 1.2vw;
+  height: 1.2vw;
+  border-radius: 50%;
+  background-color: $red;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+div#Y {
+  display: table-cell;
+  width: 1.2vw;
+  height: 1.2vw;
+  border-radius: 50%;
+  background-color: $yellow;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+div#G {
+  display: table-cell;
+  width: 1.2vw;
+  height: 1.2vw;
+  border-radius: 50%;
+  background-color: $green;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+/* close minimize maximize buttons */
+
+/* --divs for page container register login etc */
+div#pageContainer {
+  display: flex;
+  margin: 200px;
+  position: relative;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+div#wholeSize {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+div#box {
+  position: relative;
+  margin: auto;
+  align-self: center;
+  text-align: center;
+  width: auto;
+  height: auto;
+}
+
+div#boxScreen {
+  border-radius: 1%;
+  margin: 10px;
+  width: 400px;
+  height: auto;
+  padding: 10px;
+  background-color: $primary-color-light;
+  color: $primary-text-color;
+  align-self: center;
+  justify-content: center;
+  border: 2px inset $accent-color;
+}
+
+div#userCard{
+  display: flex;
+  width: 900px;
+  flex-flow: row wrap;
+  margin: auto;
+  height: auto;
+  padding: 40px;
+  background-color: transparentize($primary-color-light,0.95);
+  align-self: center;
+  justify-content: center;
+}
+
+div#card {
+  border-radius: 10%;
+  margin: 10px;
+  width: 240px;
+  height: auto;
+  padding: 30px;
+  background-color: $primary-color-light;
+  color: $primary-text-color;
+  align-self: center;
+  justify-content: center;
+  border: 2px inset $accent-color;
+}
+
+div#container {
+  margin: auto;
+  width: auto;
+  height: 100%;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+span#demoFooter {
+  position: fixed;
+  display: block;
+  top: 14;
+  left: 14;
+}
+
+/* --styling for Masonry.js -- */
+.container {
+  width: auto;
+  margin: auto;
+}
+/* ---- grid ---- */
+.grid {
+  background: $primary-color-dark;
+  margin: auto;
+}
+/* clear fix */
+.grid:after {
+  content: '';
+  display: block;
+  clear: both;
+}
+/* ---- .grid-item ---- */
+.grid-item {
+  float: left;
+}
+.grid-item img {
+  padding: 5px;
+  display: block;
+  max-width: 100%;
+}
+
+.grid-sizer,
+.grid-item { width: 33.333%; }
+/* --styling for Masonry.js -- */

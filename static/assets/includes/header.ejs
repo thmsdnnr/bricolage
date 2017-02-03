@@ -1,0 +1,13 @@
+<nav>
+  <div id="nav">
+  <%if (data.user) {%>
+    [<%=data.user%>]
+    <a href="/w/<%=data.user%>">MINE</a>
+    <a href="/w/all">EVERYONE'S</a>
+    <a href="/s">MORE</a>
+    <a href="/logout">LOG OUT</a>
+  <%} else{%>
+  <a href="/login">LOG IN</a>
+  <%}%>
+</div>
+</nav>

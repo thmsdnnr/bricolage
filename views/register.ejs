@@ -1,0 +1,26 @@
+<html>
+<head>
+  <title>Register</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <script src="https://use.fontawesome.com/0f79c3c168.js"></script>
+</head>
+<body>
+  <div id="wholeSize">
+    <div id="box">
+      <div id="boxScreen">
+      <h1>Join Us</h1>
+      <h2><%-message%></h2>
+      <form action="/register" method="post">
+        <input type="text" placeholder="Username" name="username" autofocus required /><br />
+        <input type="password" placeholder="Password" name="password" required /><br />
+        <input type="submit"><button id="submit">JOIN US</button></input>
+      </form>
+      [test/test -> dummy user]<br />
+      <a href="/login">log in</a> /
+      <a href="/auth/twitter">register with<i class="fa fa-twitter fa-2x" aria-hidden="true"></i></a>
+    </div>
+  </div>
+</div>
+<% include ../static/assets/includes/demoFooter.ejs %>
+</body>
+</html>

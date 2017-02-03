@@ -1,0 +1,32 @@
+<html>
+<head>
+  <title>photo wall</title>
+  <script>window.INITIAL_STATE = <%-JSON.stringify(data)%>;</script>
+  <script src="/assets/js/imagesloaded.pkgd.min.js"></script>
+  <script src="/assets/js/masonry.pkgd.min.js"></script>
+  <script src="/assets/js/wall.js"></script>
+  <link rel="stylesheet" type="text/css" href="/assets/css/style.css">
+</head>
+<body>
+  <% include ../static/assets/includes/header.ejs %>
+  <div class="container">
+    <div class="grid">
+      <div class="grid-sizer">
+        <%if(data.data.length) { data.data.forEach((img)=>{%>
+          <div class="grid-item" id="Z_<%=img.id%>">
+            <img src="<%=img.url%>" id="Z_<%=img.id%>">
+          </div>
+          <%}); }%>
+        </div>
+      </div>
+    </div>
+     <%if(!data.data.length) {%>
+         <div id="box">
+           <div id="boxScreen">
+            <h2>It looks like you don't have any images right now. Why not go <a href="/s">search</a> for some to add?</h2>
+        </div>
+      </div>
+    <%}%>
+    <span id="infoBox"><div id="RGY"></div></span>
+</body>
+</html>
