@@ -38,7 +38,7 @@ window.onload = function() {
 
   function imgError(image) {
       image.onerror = "";
-      image.src = "/assets/images/brico.jpeg";
+      image.src = "/assets/images/logo.png";
       return true;
   }
 
