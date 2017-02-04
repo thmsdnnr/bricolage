@@ -385,6 +385,11 @@ div#container {
   justify-content: center;
   vertical-align: middle; }
 
+div#center {
+  margin: auto;
+  width: 400px;
+  border: 2px dotted #607D8B; }
+
 span#demoFooter {
   position: fixed;
   display: block;

@@ -25,7 +25,7 @@ userSchema.statics.findByID = function (id,callback) {
   this.findOne({_id:id}, function(err, data) { return callback(err,data); });
 }
 
-userSchema.statics.listUsersWithPhotos = function (callback) {
+userSchema.statics.listUsersWithPhotos = function (callback) { //photoWall.1 if the first element exists: has photos
   this.find({'photoWall.1':{$exists:true}}, {username:1, photoWall:1}, function(err, data) { return callback(err, data); });
 }
 
@@ -35,30 +35,14 @@ userSchema.statics.findOrCreate = function (query, callback) {
     if (err) { return callback(err); }
       if (user) { return callback(null,user); }
       else {  //if user does not exist, create user with update values
-        //TODO assign new user stuff to userObj
           newUser.username=query.name;
-          newUser.password=query.password; //TODO different for twitter/local?
+          newUser.password=query.password;
           newUser.save(callback);
           }
         });
       }
 
-/* TODO delete this I think.
-//TODO: change to findOneAndUpdate in Mongo instead not your custom one
-userSchema.statics.findOneAndUpdate = function (query, updates, options, callback) {
-  let User=this;
-   User.findOne({username:query.name}, function(err,user) {
-     if (err) { return callback(err); }
-     if (!user) { return callback(null,null); }
-     else { //found user so update
-       User.update({username:query.name}, updates, options, (err, data) => { return callback(err,user); });
-       }
-     });
-   }*/
-
 userSchema.statics.addImageToUser = function (query, cb) {
-  //TODO currently duplicate inserts are prevented by killing the add modal
-  //could add a double-check in here with a findOne before adding to the user's page.
   this.update({ username: query.username },
     { $push: { photoWall: query.id }}, function (err, data) {
       if (err) { cb(err, null); }

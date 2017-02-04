@@ -80,39 +80,36 @@ app.get('/logout', function (req,res) {
   req.logout();
   req.session.destroy();
   res.redirect('/login');
-  //TODO res-render message thx for coming bro
 });
 
 app.post('/mod', function(req,res) { //update user images (add/delete)
   //takes an IMAGE ID (req.body.id), an action (req.body.action) [ADD, DELETE], and (req.body.user) for matching-user authentication
   let id=req.body.id.slice(2); //lop off the Z_ we prepend to the ID internally to make number-beginning IDs valid selectors
-  console.log(req.body);
   if (req.body.user!==req.session.user) { return false; } //not authorized to tamper if logged out or on another user's page
   if (req.body.action==='ADD') {
     Image.findOrCreate({imageID:id, info:req.body.imgData}, function(err, data) { //adds it to our link database as well
-      console.log(data);
+      if(err) { console.log('error:',err); }
     });
     User.addImageToUser({username:req.body.user, id:id}, function(err, data) {
-      if(!err) {console.log(data); res.send('success');}
+      if(err) { res.send('success');}
     });
   }
   if (req.body.action==='DELETE') {
     User.removeImageFromUser({username:req.body.user, id:id}, function(err, data) {
-      if(!err) {console.log(data); res.send('success');}
+      if(!err) { res.send('success');}
     });
   }
 });
 
 /* --- ASYNC Database and HTTP Wrapper Helpers --- */
-//TODO add page number of search here & the perPage
-function imageSearchUnsplash(query,params) { //Returns a promise containing the Unsplash query result set TODO implement params
+function imageSearchUnsplash(query,params) { //Returns a promise containing the Unsplash query result set
   return new Promise(function (resolve,reject) {
     let rPage=params.resultPage || 1;
         fetch(`https://api.unsplash.com/search/photos?page=${rPage}&query=${query}&client_id=${process.env.API_KEY}`)
-      .then(function(images) { //console.log(images);
-        if (!images.errors) { resolve(images.json()); } //TODO error handling
+      .then(function(images) {
+        if (!images.errors) { resolve(images.json()); }
         else { reject(images.errors); }
-      }).catch(function(err) { console.log(err); reject(err); }); //returns a promise
+      }).catch(function(err) { console.log(err); reject(err); });
     });
   }
 
@@ -125,7 +122,7 @@ function getOnePhoto(imageID) { //Returns a promise for an image grab from the d
   });
 }
 
-function payloadPrep(data,user) { //TODO clean up this ugly promise nesting
+function payloadPrep(data,user) {
   return new Promise(function(resolve,reject) {
   let imgLinks=[]; //URLs to images from this search. Never null.
   let userList=getUserImageDict(user); //images the user has already added in this search. Could be null.
@@ -134,7 +131,7 @@ function payloadPrep(data,user) { //TODO clean up this ugly promise nesting
   Promise.all(imgPromises).then(function(images) {
     images.forEach((img)=>{
       let i=img.imageInfo;
-      imgLinks.push({id:i.id,url:i.urls.small}); //TODO change this maybe sizewise
+      imgLinks.push({id:i.id,url:i.urls.small});
       imgDict[i.id]=img;
     });
     userList.then(function(userList) {
@@ -159,10 +156,9 @@ function getUserImageDict(user) { //Returns promise to generate a dictionary of 
     });
   });
 }
-/* --- */
 
 //Display users who have image walls
-
+//Randomize preview image by randomizing their thumbnails
 app.get('/w/all', function(req,res) {
   User.listUsersWithPhotos(function(err, data){
     if(!err) {
@@ -178,7 +174,6 @@ app.get('/w/all', function(req,res) {
             users.push({user:data[i].username, thumbURL:t[i].imageInfo.urls.thumb, numImages:data[i].photoWall.length});
           }
           res.render('userPages',{data:{users:users, user:req.session.user}});
-          console.log(users);
         });
       }
     }
@@ -186,8 +181,7 @@ app.get('/w/all', function(req,res) {
 });
 
 app.get('/s', function(req,res) {
-  console.log(req.query);
-  //?q=${query}&p=${page}
+  //RESTOFURL/s/?q=${query}&p=${page}
   //reject if p<1 or if p contains non-numeric characters or if p>100
   if(!Object.keys(req.query).length) {
     res.render('search', {data:{user:req.session.user},message:req.flash('welcomeMessage')});
@@ -200,30 +194,21 @@ app.get('/s', function(req,res) {
   else if ((req.query.q==='')||(req.query.q.match(/[^\w\s]/gi))) {
     res.render('search', {data:{user:req.session.user, message:'Malformed search request!'}});
   }
-  //TODO need more validation?? client-side autocomplete help for invalid chars?
   else { //WE ARE GOOD
-    console.log('req.query.q',req.query.q);
-    console.log('req.query.p',req.query.p);
     let imgLinks=[]; //URLs to images from this search. Never null.
     let userList=getUserImageDict(req.session.user); //images the user has already added in this search. Could be null.
     let imgDict={}; //info about all the images in this search. Never null.
     let resultPage=req.query.p; //the form gives it to us as "1" instead of 1
-    console.log(resultPage);
-  //TODO add param for page # to go with qText -> when we do a new page we check findSearch
     Search.findSearch({qText:req.query.q,resultPage:req.query.p}, function(err,data){
       if(err) {console.log(err); return false; }
       if(!data) {
         imageSearchUnsplash(req.query.q,{resultPage:req.query.p}).then(function(images) {
-          console.log('208:', images);
-          //for a blank result, images will look like this:
-          //{ total: 0, total_pages: 0, results: [] }
+          //for a blank result, images will look like this: { total: 0, total_pages: 0, results: [] }
           if(images.results) {
             images.results.forEach((img)=>{
               //build array to send to client
-              imgLinks.push({id:img.id,url:img.urls.small}); //TODO change this maybe sizewise
-              imgDict[img.id]={imageInfo:img}; //TODO we add the imageInfo key here to make this match up with our SAVED image object path
-              //could maybe clean this up: thing being the Unsplash API data doesn't match with the way we store the Image data in our Schema
-              //wrt reading from the wall.ejs
+              imgLinks.push({id:img.id,url:img.urls.small});
+              imgDict[img.id]={imageInfo:img};
               //save images to Db.
               Image.findOrCreate({imageID:img.id,data:img},function(err,data) {
             });
@@ -236,18 +221,15 @@ app.get('/s', function(req,res) {
           //render page
           let payload={data:imgLinks, user:req.session.user, userList:userList, dict:imgDict,
             query:{query:req.query.q, numImages:images.total, resultPage:req.query.p, totalPages:images.total_pages}};
-
-          res.render('wall',{data:payload}); //TODO send current result to add pagination
+          res.render('wall',{data:payload});
         }
-        else {//no data in UNSPLASH. Handle gracefully. And don't save the search query!
+        else { //no data in UNSPLASH. Handle gracefully. And don't save the search query!
           let payload={header:'You outsmarted us!',message:`Well, you reached the end of the Internets. Congratulations! There were no search results available. Why don't you <a href="/s">go back</a> and search again?`}
           res.render('message',{data:payload});
         }
       }).catch(function(err) {console.log(err); res.send('There was a bad thing');});
     }
       else { //there is data, and we have it in the Db already.
-        console.log('found some data. rendering');
-        console.log('data', data);
         let payload=payloadPrep(data,req.session.user);
         payload.then(function(payload) {
           res.render('wall',{data:payload});
@@ -259,74 +241,12 @@ app.get('/s', function(req,res) {
   }
 });
 
-//SEARCH routes for UNSPLASH
-
-// /S can receive a POST from the search form on the main page, in which case only qText is populated
-// /S can also receive a POST from the client in which case qText and resultPage are popualted
-/*
-app.post('/s', function(req,res) {
-  let imgLinks=[]; //URLs to images from this search. Never null.
-  let userList=getUserImageDict(req.session.user); //images the user has already added in this search. Could be null.
-  let imgDict={}; //info about all the images in this search. Never null.
-  let resultPage=req.body.rPage||1; //the form gives it to us as "1" instead of 1
-  console.log(resultPage);
-//TODO add param for page # to go with qText -> when we do a new page we check findSearch
-  Search.findSearch({qText:req.body.qText,qParams:req.body.qParam,resultPage:resultPage}, function(err,data){
-    if(err) {console.log(err); return false; }
-    if(!data) {
-      imageSearchUnsplash(req.body.qText,{resultPage:resultPage}).then(function(images) {
-        console.log(images);
-        //for a blank result, images will look like this:
-        //{ total: 0, total_pages: 0, results: [] }
-        if(images.results) {
-          images.results.forEach((img)=>{
-            //build array to send to client
-            imgLinks.push({id:img.id,url:img.urls.small}); //TODO change this maybe sizewise
-            imgDict[img.id]={imageInfo:img}; //TODO we add the imageInfo key here to make this match up with our SAVED image object path
-            //could maybe clean this up: thing being the Unsplash API data doesn't match with the way we store the Image data in our Schema
-            //wrt reading from the wall.ejs
-            //save images to Db.
-            Image.findOrCreate({imageID:img.id,data:img},function(err,data) {
-            console.log('ImagefindorCreate:',err,data);
-          });
-        });
-        //save search to Db
-        let imageIDArr=images.results.map((img)=>img.id);
-        Search.saveSearch({qText:req.body.qText,qParams:req.body.qParam,imageIDArr:imageIDArr,resultPage:resultPage,totalPages:images.total_pages}, function(err, data) {
-          if(err) { console.log(err); return false; }
-        });
-        //render page
-        let payload={data:imgLinks, user:req.session.user, userList:userList, dict:imgDict,
-          query:{query:req.body.qText, numImages:images.total, resultPage:resultPage, totalPages:images.total_pages}};
-
-        res.render('wall',{data:payload}); //TODO send current result to add pagination
-      }
-      else {//no data in UNSPLASH. Handle gracefully. And don't save the search query!
-        let payload={header:'You outsmarted us!',message:`Well, you reached the end of the Internets. Congratulations! There were no search results available. Why don't you <a href="/s">go back</a> and search again?`}
-        res.render('message',{data:payload});
-      }
-    }).catch(function(err) {console.log(err); res.send('There was a bad thing');});
-  }
-    else { //there is data, and we have it in the Db already.
-      console.log('found some data. rendering');
-      console.log('data', data);
-      let payload=payloadPrep(data,req.session.user);
-      payload.then(function(payload) {
-        res.render('wall',{data:payload});
-      }).catch(function(err){
-        console.log(err);
-      });
-    }
-  });
-});
-*/
 app.get('/w/:username', function(req,res) { //Get a user's wall given a username
-  //TODO keep search user distinct from login user
   let imgLinks=[]; //URLs to images from this search. Never null.
   let userList=getUserImageDict(req.session.user); //images the user already has. Could be null.
   let imgDict={}; //info about all the images in this search. Never null.
   if (!req.params.username) {
-    res.redirect('/'); //TODO default redirects
+    res.redirect('/');
   }
     User.getUserImages({username:req.params.username}, function(err,data) {
       if(!err) {
@@ -336,18 +256,18 @@ app.get('/w/:username', function(req,res) { //Get a user's wall given a username
           Promise.all(photoPromises).then(function(data) {
             data.forEach((img)=>{
               let i=img.imageInfo;
-              imgLinks.push({id:i.id,url:i.urls.small}); //TODO change this maybe sizewise
+              imgLinks.push({id:i.id,url:i.urls.small});
               imgDict[i.id]=img;
             });
             imgLinks.reverse(); //display in descending order, so newest added come first
         userList.then(function(uList) {
           let payload={data:imgLinks, user:req.session.user, userList:uList, dict:imgDict};
-          res.render('wall',{data:payload}); //TODO send current result to add pagination
+          res.render('wall',{data:payload});
         });
       });
     }
-          else {
-            res.render('wall',{data:''});
+        else { //our wall.ejs handles blank data with an appropriate message
+          res.render('wall',{data:''});
           }
         }
       });

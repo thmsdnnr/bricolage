@@ -22,13 +22,15 @@
       </div>
     </div>
      <%if((!data.data.length)&&(!data.query)) {%>
+       <div id="center">
          <div id="box">
            <div id="boxScreen">
             <h2>It looks like you don't have any images right now. Why not go <a href="/s">search</a> for some to add?</h2>
         </div>
       </div>
+    </div>
     <%}%>
-    <%if (!data.data.length) {%>
+    <%if ((!data.data.length)&&(data.query)) {%>
       <div id="box">
         <div id="boxScreen">
          <h2>Something bad happened. That's all we know. Why not go <a href="/s">search</a> again?</h2>

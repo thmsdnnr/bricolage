@@ -436,6 +436,12 @@ div#container {
   vertical-align: middle;
 }
 
+div#center {
+  margin: auto;
+  width: 400px;
+  border: 2px dotted $accent-color;
+}
+
 span#demoFooter {
   position: fixed;
   display: block;

@@ -1,34 +1,21 @@
+/*NOTES:
+-internally we prepend IDs with Z_ so numeric beginning IDs are valid CSS selectors
+->hence the .slice(2) call when comparing page IDs with database IDs
+->IDs are rendered on the page in the dataset-text attribute and accessed on click events through
+e.target.dataset.text
+ */
 window.onload = function() {
-  //debounce function from Underscore.js
-  // Returns a function, that, as long as it continues to be invoked, will not
-  // be triggered. The function will be called after it stops being called for
-  // N milliseconds. If `immediate` is passed, trigger the function on the
-  // leading edge, instead of the trailing.
-  function debounce(func, wait, immediate) {
-  	var timeout;
-  	return function() {
-  		var context = this, args = arguments;
-  		var later = function() {
-  			timeout = null;
-  			if (!immediate) func.apply(context, args);
-  		};
-  		var callNow = immediate && !timeout;
-  		clearTimeout(timeout);
-  		timeout = setTimeout(later, wait);
-  		if (callNow) func.apply(context, args);
-  	};
-  };
-
-  let gridStates={};
-  let modalPopped=false;
-  let screenPopped=false;
-  let yScrollModalReturn;
   let _d=window.INITIAL_STATE;
   let imgDict=_d.dict;
   let q=window.INITIAL_STATE.query;
+  let gridStates={};
+  let brokenImages={};
+  let modalPopped=false;
+  let screenPopped=false;
+  let yScrollModalReturn;
 
-  function showLessMoreResults(query,page) { //called with query and current page
-    //?q=${query}&p=${page}
+  function showLessMoreResults(query,page) {
+    //called with query and current page, e.g., RESTOFURL/s/?q=${query}&p=${page}
     let numTotalPages=parseInt(q.totalPages);
     let numResultPage=parseInt(q.resultPage);
     let numImages=parseInt(q.numImages);
@@ -45,41 +32,19 @@ window.onload = function() {
       }
     }
 
-//{qText:req.body.qText,qParams:req.body.qParam,resultPage:resultPage}
-  function fetchMoreResults(query, page) { //TODO turn this into a GET. Take the data and call a rendering
-    fetch('/s',{
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-      },
-      method: "POST",
-      credentials: "include",
-      body: `qText=${query}&rPage=${page}`
-    }).then(response=>{
-      console.log(response);
-    });
-  }
-
-  console.log(window.INITIAL_STATE);
-  console.log(_d.userList);
-
   var elem = document.querySelector('.grid');
-  var msnry = new Masonry( elem, {
-  // options
+  var msnry = new Masonry( elem, { //options
   itemSelector: '.grid-item',
   columnWidth: '.grid-sizer',
   percentPosition: true
   });
 
-  function imgError(image) {
-      image.onerror = "";
-      image.src = "/assets/images/logo.png";
-      return true;
-  }
-
   imagesLoaded(elem).on('progress', function(instance, image){
-    //TODO since it's a placeholder make sure to NOT display attribution data for it!
-    if (!image.isLoaded) { image.img.src='/assets/images/brico.jpeg'; console.log(image);}
+    if (!image.isLoaded) {
+      //if image does not load: update with placeholder, add to broken image list for tooltip
+      image.img.src='/assets/images/logo.png';
+      brokenImages[image.img.id]=1;
+    }
   });
 
   imagesLoaded(elem).on('done', function() {
@@ -89,27 +54,28 @@ window.onload = function() {
 
   // from https://24ways.org/2010/calculating-color-contrast/
   function whatColorText(hexcolor){ //white or black, which is more contrasty?
-	var r = parseInt(hexcolor.substr(0,2),16);
-	var g = parseInt(hexcolor.substr(2,2),16);
-	var b = parseInt(hexcolor.substr(4,2),16);
-	var yiq = ((r*299)+(g*587)+(b*114))/1000;
-	return (yiq >= 128) ? '#000000' : '#FFFFFF';
-}
+     var r = parseInt(hexcolor.substr(0,2),16);
+     var g = parseInt(hexcolor.substr(2,2),16);
+     var b = parseInt(hexcolor.substr(4,2),16);
+     var yiq = ((r*299)+(g*587)+(b*114))/1000;
+	   return (yiq >= 128) ? '#000000' : '#FFFFFF';
+  }
 
   let lastElement;
   let padding=1; //px
   function updateToolTip() {
-    //console.log('gridstate', gridStates[lastElement.id]);
-    if(lastElement&&!modalPopped) {
-      let v=imgDict[lastElement.id.slice(2)]; //TODO this lopping off thing tho
+    if (gridStates[lastElement.id].broken) { return false; }
+    if (lastElement&&!modalPopped) {
+      let v=imgDict[lastElement.id.slice(2)];
       let u=v.imageInfo.user;
       let bgColor=v.imageInfo.color;
       let iBCR=document.querySelector(`img#${lastElement.id}`);
       let bcr=iBCR.getBoundingClientRect(); //TODO this works but fix
       let i=document.querySelector('span#infoBox');
       i.style.border=`5px inset ${bgColor}`;
-      //clear existing
+      //clear existing content
       i.innerHTML=null;
+      //if image is broken, don't display any hover thing
       //conditional control display based on maximized/minimized state
       if (gridStates[lastElement.id].minimized) {
         i.innerHTML+=`<div id="RGY"><div id="R" class="light" data-text="${lastElement.id}"></div><div id="G" class="light" data-text="${lastElement.id}"></div></div>`;
@@ -117,13 +83,10 @@ window.onload = function() {
       else {
         i.innerHTML+=`<div id="RGY"><div id="R" class="light" data-text="${lastElement.id}"></div><div id="Y" class="light" data-text="${lastElement.id}"></div><div id="G" class="light" data-text="${lastElement.id}"></div></div>`;
       }
-      //add tooltip attribution stuff
       let img,name,location,portF;
       if (u.profile_image) {
-        /*urls are like this:
-        "https://images.unsplash.com/profile-1469106954784-359e75d17f0d?ixlib=rb-0.3…srgb...
-        or this:
-        "https://images.unsplash.com/placeholder-avatars/extra-large.jpg?ixlib=rb-...
+        /*urls are like this: https://images.unsplash.com/profile-1469106 or this:
+        https://images.unsplash.com/placeholder-avatars/extra-large.jpg?ixlib=rb-...
         We don't want to display placeholders, so parse url for 'profile' or 'placeholder' and act accordingly */
         let profImgType=u.profile_image.medium.split("https://images.unsplash.com/")[1].split("-")[0];
         (profImgType==='profile') ? img=`<img src="${u.profile_image.medium}" class="profileImage">` : img='';
@@ -131,10 +94,11 @@ window.onload = function() {
       (u.name) ? name=u.name : name='~';
       (u.portfolio_url) ? portF=`<a href="${u.portfolio_url}" target="_new">${img}${name}</a><br />` : portF=`${img}`;
       (u.location) ? location=`${u.location}` : location = '';
-//TODO double check _d.user!==req.body.username
-      if (_d.user&&!_d.userList[lastElement.id.slice(2)]) { //TODO that slice two though
+
+      if (_d.user&&!_d.userList[lastElement.id.slice(2)]) {
         i.innerHTML+=`<div id="addButton"><button id="addButton" data-text="${lastElement.id}" class="wave">ADD+ <3s: ${v.imageInfo.likes}</button></div>`;
       }
+
       i.innerHTML+=`<span id="boxCont"><div id="attribution"><div id="name" class="child">${portF}${location}</span>`;
       i.innerHTML+=`</div></span>`;
       i.classList.add('showTip');
@@ -143,17 +107,16 @@ window.onload = function() {
       i.style.left=bcr.left+padding;
       i.style.width=bcr.width-padding*2;
       i.style.height=bcr.height-padding*2;
-      i.style.color=whatColorText(bgColor.slice(1)); //lop off the hash
+      i.style.color=whatColorText(bgColor.slice(1)); //lop off the octothorpe e.g., #FFFFFF->FFFFFF
     }
   }
 
-//add listeners
-    function triggerTheMagic() {
+    function triggerTheMagic() { //add event listeners for scroll, click, and resize
       let divs=document.querySelectorAll('div.grid-item');
       divs.forEach((d)=>d.addEventListener('mouseover', handleMouse));
       let iBox=document.querySelector('span#infoBox'); //whole info attribution box
       iBox.addEventListener('click', handleDivClick);
-      let modBox=document.querySelector('div#RGY'); //close, minimize, maximize buttons upper-left
+      let modBox=document.querySelector('div#RGY'); //RGY is the close, minimize, maximize buttons at upper-left
       iBox.addEventListener('mouseover', handleModBox);
       iBox.addEventListener('mouseout', handleModBox);
       window.addEventListener('scroll', handleScroll);
@@ -176,9 +139,11 @@ window.onload = function() {
     let elements=document.querySelectorAll(`div.grid-item`);
     elements.forEach((ele)=>{
       let bcr=ele.getBoundingClientRect();
-      gridStates[ele.id] = {'initialWidth':bcr.width,'initialHeight':bcr.height,'maximized':false,'minimized':false};
+      let broken;
+      (brokenImages[ele.id]) ? broken=true : broken=false;
+      gridStates[ele.id] = {'initialWidth':bcr.width,'initialHeight':bcr.height,'maximized':false,'minimized':false,
+    broken:broken};
     });
-  console.log(gridStates);
   }
 
   function modBoxGlyphs(display='hide') {
@@ -215,28 +180,25 @@ window.onload = function() {
         let ele=document.querySelector(`div.grid-item#${e.target.dataset.text}`);
         undoDeletion(ele,e);
         }
-      if (e.target.id==='G') { //maximize
+      if (e.target.id==='G') { //MAXIMIZE
         if (gridStates[e.target.dataset.text].minimized) { //restore to original size
           scaleByFactor(2, e.target.dataset.text);
           gridStates[e.target.dataset.text].minimized=false;
           msnry.layout();
-          updateToolTip(); //TODO make this a little cleaner
+          updateToolTip();
         }
         else if (!gridStates[e.target.dataset.text].maximized) { //make it big!
             gridStates[e.target.dataset.text].maximized=true;
             popModal(e.target.dataset.text);
-            updateToolTip(); //TODO make this a little cleaner
+            updateToolTip();
           }
         }
-      if (e.target.id==='Y') { //minimize
-        //handle maximization, display close box at upper right
-        //on close, msnry unstamp(ele)
-        //instead of scale, use window size to pop a div.
+      if (e.target.id==='Y') { //MINIMIZE
         if (!gridStates[e.target.dataset.text].minimized) {
           console.log('minimize');
           scaleByFactor(0.5, e.target.dataset.text);
           gridStates[e.target.dataset.text].minimized=true;
-          updateToolTip(); //TODO make this a little cleaner
+          updateToolTip();
           msnry.layout();
         }
       }
@@ -247,7 +209,7 @@ window.onload = function() {
       updateToolTip();
     }
     if (e.target.id==='addButton') {
-      document.querySelector('span#infoBox').style.display='none'; //TODO maybe change this to an "added" thing
+      document.querySelector('span#infoBox').style.display='none';
       console.log('add button');
       console.log(e.target.dataset.text);
       fetch('/mod',{
@@ -261,7 +223,7 @@ window.onload = function() {
       }).then(response=>{
         toaster(e, 'Good Choice!', 1);
         console.log(response);
-        _d.userList[e.target.dataset.text.slice(2)]=1; //TODO that damn slice(2)
+        _d.userList[e.target.dataset.text.slice(2)]=1;
         console.log(_d.userList);
       });
     }
@@ -272,7 +234,7 @@ window.onload = function() {
     //add an event listener on click to redo
     //then setTimeout for element removal and call completeDelete
     element.style.display='none';
-    let id=event.target.dataset.text; //need to slice off the Z_ with slice(2) in the fetch to server!
+    let id=event.target.dataset.text;
     msnry.layout();
     let toasty;
     toaster(event, '<a href="#" id="undo">You sure? Click->Undo</a>', 3, function(toastSlice) {
@@ -311,7 +273,7 @@ window.onload = function() {
         console.log(text);
     });
   });
-  _d.userList[id.slice(2)]=1; //TODO that damn slice(2)
+  _d.userList[id.slice(2)]=1;
   msnry.remove(element);
   msnry.layout();
 }
@@ -322,7 +284,7 @@ window.onload = function() {
     let bcr=ele.getBoundingClientRect();
     ele.style.width=bcr.width*factor;;
     ele.style.height=bcr.height*factor;
-    let sizer=document.querySelector(`div.grid-sizer`); //TODO maybe change this smomewhere else dynamically
+    let sizer=document.querySelector(`div.grid-sizer`);
     sizer.style.width=bcr.width*factor;
     sizer.style.height=bcr.height*factor;
     (factor>1) ? ele.style.zIndex=1 : null; //pop it on top if it's big
@@ -340,65 +302,49 @@ window.onload = function() {
         screen.style.width=window.innerWidth;
       //modal itself
         let modal=document.createElement('div');
+        let borderColor=imgDict[lastElement.id.slice(2)].imageInfo.color;
         modal.id='imgModal';
         modal.dataset.id=id;
-        let borderColor=imgDict[lastElement.id.slice(2)].imageInfo.color;
-
         modal.style.top=0;
+        modal.style.left=Math.floor(window.scrollX+(window.innerWidth-parseInt(modal.style.width))/2);
         modal.style.width=window.innerWidth-10;
         modal.style.border=`4px solid ${borderColor}`;
 
         let closeBox=document.createElement('div');
         closeBox.id='modalClose';
         closeBox.innerHTML=`X`;
-        modal.style.left=Math.floor(window.scrollX+(window.innerWidth-parseInt(modal.style.width))/2);
-
         closeBox.addEventListener('click',killModal,true);
         modal.appendChild(closeBox);
-        let img=new Image();
+
+        let img=new Image(); //load the maximized image for the div background
         img.onload=function() {
           modal.style.height=img.height;
           document.body.append(screen);
           screenPopped=screen;
           document.body.append(modal);
-          window.scroll(0,0);
-          modalPopped=modal;
+          window.scroll(0,0); //we scroll to the top so we only have to handle scrolling past the bottom of the modal
+          modalPopped=modal;  //on modal close we restore window position by scrolling back to yScrollModalReturn
         }
-        img.src=`${imgDict[id.slice(2)].imageInfo.urls.regular}`; //TODO that lopping off tho
-        //Math.floor(window.scrollY+(window.innerHeight-modal.style.height.split("px")[0])/2);
-        modal.style.left=Math.floor(window.scrollX+(window.innerWidth-parseInt(modal.style.width))/2);
+        img.src=`${imgDict[id.slice(2)].imageInfo.urls.regular}`;
         modal.style.backgroundImage=`url(${img.src})`;
     }
 
-    function recalculateModal() { //TODO add resizing!
+    function recalculateModal() {
       if(!modalPopped) { return false; }
       if(modalPopped) {
         let modal=document.querySelector('div#imgModal');
-        console.log('offset top, offest height', modal.offsetTop,modal.offsetHeight);
-        console.log('w scroll Y', window.scrollY);
-        //TODO smooth this out or make it less jerky
         if (window.scrollY > (modal.offsetHeight-modal.offsetTop)) { //infinity scroll heh
-          window.scroll(0,modal.style.top); //pop back to top if more than half has been scrolled off screen
+          window.scroll(0,modal.style.top); //pop back to top if we've scrolled off screen while maximized image is up
         }
-        console.log(window,scrollY)
-        console.log((modal.offsetTop + modal.offsetHeight));
-        console.dir(modal);
-      //  modal.style.maxHeight=window.innerHeight-10;
-      //  modal.style.maxWidth=window.innerWidth-10;
-      //  modal.style.height=window.innerHeight-40;
         let screen=document.querySelector('div#modalScreen');
         modal.style.width=window.innerWidth-10;
         screen.style.width=window.innerWidth;
-        console.log('scree nwidth',screen.style.width);
-        modal.style.width=window.innerWidth-10;
         modal.style.left=Math.floor(window.scrollX+(window.innerWidth-parseInt(modal.style.width))/2);
       }
     }
 
     function killModal() {
       gridStates[modalPopped.dataset.id].maximized=false;
-      console.dir(modalPopped);
-      console.dir(screenPopped);
       modalPopped.parentElement.removeChild(modalPopped);
       screenPopped.parentElement.removeChild(screenPopped);
       document.querySelector('span#infoBox').style.display='none'; //remove the infobox
@@ -406,9 +352,9 @@ window.onload = function() {
       window.scroll(0,yScrollModalReturn);
     }
 
-// example call:
-//    toaster(event, '<a href="#" id="undo">You sure? Click->Undo</a>', 3, function()
     function toaster(e, message, duration=1, callback, offset=2) {
+      // example call:
+      //toaster(event, '<a href="#" id="undo">You sure? Click->Undo</a>', 3, callback(), offset from corner of screen
       let tea=document.createElement('div');
       tea.id='toast';
       tea.classList.add('toast');
@@ -416,13 +362,31 @@ window.onload = function() {
       //are we more than halfway to the right? if so, put the toast in the upper-right corner
       //are we more than halfway down? put the toast in the bottom bro
       ((e.offsetX-window.scrollX)>window.innerWidth/2) ? tea.style.right=offset : tea.style.left=offset;
-      console.log(e.offsetY,window.innerHeight);
       ((e.offsetY-window.scrollY)>window.innerHeight/2) ? tea.style.bottom=offset : tea.style.top=offset;
       document.body.append(tea);
-      setTimeout(function(){
-        //eat the toast
+      setTimeout(function(){ //eat the toast
         tea.parentElement.removeChild(tea);
       },duration*1000);
       (callback) ? callback(tea) : null;
     }
+
+    //debounce function from Underscore.js
+    // Returns a function, that, as long as it continues to be invoked, will not
+    // be triggered. The function will be called after it stops being called for
+    // N milliseconds. If `immediate` is passed, trigger the function on the
+    // leading edge, instead of the trailing.
+    function debounce(func, wait, immediate) {
+      var timeout;
+      return function() {
+        var context = this, args = arguments;
+        var later = function() {
+          timeout = null;
+          if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+      };
+    };
   }

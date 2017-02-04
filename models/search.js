@@ -14,7 +14,7 @@ let searchSchema = new Schema({
 searchSchema.statics.findById = function (id,callback) {
   this.findOne({_id:id}, function(err, data) { return callback(err,data); });
 }
-//resultPage:resultPage
+
 searchSchema.statics.findSearch = function(query, callback) {
   this.findOne({$and:[{qText:query.qText},{resultPage:query.resultPage}]}, function(err,search) {
     return callback(err,search);
