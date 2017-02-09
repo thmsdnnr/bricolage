@@ -83,6 +83,7 @@ app.get('/logout', function (req,res) {
 });
 
 app.post('/mod', function(req,res) { //update user images (add/delete)
+  console.log(req.body);
   //takes an IMAGE ID (req.body.id), an action (req.body.action) [ADD, DELETE], and (req.body.user) for matching-user authentication
   let id=req.body.id.slice(2); //lop off the Z_ we prepend to the ID internally to make number-beginning IDs valid selectors
   if (req.body.user!==req.session.user) { return false; } //not authorized to tamper if logged out or on another user's page
@@ -91,7 +92,7 @@ app.post('/mod', function(req,res) { //update user images (add/delete)
       if(err) { console.log('error:',err); }
     });
     User.addImageToUser({username:req.body.user, id:id}, function(err, data) {
-      if(err) { res.send('success');}
+      if(!err) { res.send('success');}
     });
   }
   if (req.body.action==='DELETE') {
@@ -153,6 +154,9 @@ function getUserImageDict(user) { //Returns promise to generate a dictionary of 
         });
         resolve(userDict);
       }
+      else {
+        reject('no data');
+      }
     });
   });
 }
@@ -196,7 +200,7 @@ app.get('/s', function(req,res) {
   }
   else { //WE ARE GOOD
     let imgLinks=[]; //URLs to images from this search. Never null.
-    let userList=getUserImageDict(req.session.user); //images the user has already added in this search. Could be null.
+    let userList=getUserImageDict(req.session.user); //images the user has already added in this search. Null -- if no logged in user for sure.
     let imgDict={}; //info about all the images in this search. Never null.
     let resultPage=req.query.p; //the form gives it to us as "1" instead of 1
     Search.findSearch({qText:req.query.q,resultPage:req.query.p}, function(err,data){
@@ -242,12 +246,11 @@ app.get('/s', function(req,res) {
 });
 
 app.get('/w/:username', function(req,res) { //Get a user's wall given a username
+  if (!req.params.username) { res.redirect('/'); }
   let imgLinks=[]; //URLs to images from this search. Never null.
-  let userList=getUserImageDict(req.session.user); //images the user already has. Could be null.
+  let userList;
+  (req.session.user) ? userList=getUserImageDict(req.session.user) : userList=null; //images the user already has. Could be null.
   let imgDict={}; //info about all the images in this search. Never null.
-  if (!req.params.username) {
-    res.redirect('/');
-  }
     User.getUserImages({username:req.params.username}, function(err,data) {
       if(!err) {
         if (data)
@@ -260,18 +263,23 @@ app.get('/w/:username', function(req,res) { //Get a user's wall given a username
               imgDict[i.id]=img;
             });
             imgLinks.reverse(); //display in descending order, so newest added come first
-        userList.then(function(uList) {
-          let payload={data:imgLinks, user:req.session.user, userList:uList, dict:imgDict};
-          res.render('wall',{data:payload});
-        });
+    if (userList) { userList.then(function(uList) {
+      let payload={data:imgLinks, user:req.session.user, userList:uList, dict:imgDict};
+      res.render('wall',{data:payload});
       });
     }
-        else { //our wall.ejs handles blank data with an appropriate message
-          res.render('wall',{data:''});
-          }
-        }
-      });
-    });
+    else {
+      let payload={data:imgLinks, user:req.session.user, userList:'', dict:imgDict};
+      res.render('wall',{data:payload});
+    }
+  });
+}
+  else { //our wall.ejs handles blank data with an appropriate message
+    res.render('wall',{data:''});
+    }
+  }
+});
+});
 
 //Catch-all route
 app.get('*', (req,res)=>{ res.redirect('/login'); });

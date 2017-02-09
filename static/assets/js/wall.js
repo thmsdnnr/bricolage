@@ -147,17 +147,19 @@ window.onload = function() {
   }
 
   function modBoxGlyphs(display='hide') {
+    //note, minimize is not always visible because it goes away when minimized, hence div#Y will be null selector.
+    //we check with ternary
     let close=document.querySelector('div#R');
     let minimize=document.querySelector('div#Y');
     let maximize=document.querySelector('div#G');
     if (display==='show') {
       close.innerHTML=`⤫`; //&#10539;'; // ⤫ unicode: U+0292B hex: &#x292B; html: &#10539;
-      minimize.innerHTML=`―`; // ― unicode: U+02922 hex: &#x2922 html: &#10530;
+      (minimize) ? minimize.innerHTML=`―` : null; // ― unicode: U+02922 hex: &#x2922 html: &#10530;
       maximize.innerHTML=`⤢`; // ⤢ unicode: U+02015 hex: &#x2015; html: &#8213; htmlentity: &horbar;
     }
     else {
       close.innerHTML='&nbsp;';
-      minimize.innerHTML='&nbsp;';
+      (minimize) ? minimize.innerHTML='&nbsp;' : null;
       maximize.innerHTML='&nbsp;';
     }
   }
@@ -209,6 +211,7 @@ window.onload = function() {
       updateToolTip();
     }
     if (e.target.id==='addButton') {
+      console.log('adding');
       document.querySelector('span#infoBox').style.display='none';
       console.log('add button');
       console.log(e.target.dataset.text);
@@ -220,14 +223,15 @@ window.onload = function() {
         method: "POST",
         credentials: "include",
         body: `user=${_d.user}&id=${e.target.dataset.text}&action=ADD`
-      }).then(response=>{
+      }).then(function(response){
         toaster(e, 'Good Choice!', 1);
         console.log(response);
         _d.userList[e.target.dataset.text.slice(2)]=1;
         console.log(_d.userList);
-      });
+      }).catch(function(err){
+        console.log(err);});
+      }
     }
-  }
 
   function undoDeletion(element, event) {
     //pop a toast with a link
